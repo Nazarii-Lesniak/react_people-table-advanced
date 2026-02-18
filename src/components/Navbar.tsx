@@ -1,7 +1,9 @@
-import classNames from "classnames";
-import { NavLink } from "react-router-dom";
+import classNames from 'classnames';
+import { NavLink, useLocation } from 'react-router-dom';
 
 export const Navbar = () => {
+  const { search } = useLocation();
+
   const isActiveStyle = ({ isActive }: { isActive: boolean }) =>
     classNames('navbar-item', { 'has-background-grey-lighter': isActive });
 
@@ -19,9 +21,11 @@ export const Navbar = () => {
           </NavLink>
 
           <NavLink
-            aria-current="page"
             className={isActiveStyle}
-            to="/people"
+            to={{
+              pathname: '/people',
+              search: search,
+            }}
           >
             People
           </NavLink>

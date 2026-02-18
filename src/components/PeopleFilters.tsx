@@ -1,5 +1,5 @@
 import classNames from 'classnames';
-import { useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { SearchLink } from './SearchLink';
 import { getSearchWith } from '../utils/searchHelper';
 
@@ -44,11 +44,15 @@ export const PeopleFilters = () => {
             className="input"
             placeholder="Search"
             value={query || ''}
-            onChange={event =>
-              setSearchParams(getSearchWith(searchParams, {
-                query: event.target.value.trim(),
-              }))
-            }
+            onChange={event => {
+              const { value } = event.target;
+
+              setSearchParams(
+                getSearchWith(searchParams, {
+                  query: value.trim() || null,
+                }),
+              );
+            }}
           />
 
           <span className="icon is-left">
@@ -104,9 +108,9 @@ export const PeopleFilters = () => {
       </div>
 
       <div className="panel-block">
-        <a className="button is-link is-outlined is-fullwidth" href="#/people">
+        <Link to="/people" className="button is-link is-outlined is-fullwidth">
           Reset all filters
-        </a>
+        </Link>
       </div>
     </nav>
   );

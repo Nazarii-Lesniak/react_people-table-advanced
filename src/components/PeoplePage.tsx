@@ -1,5 +1,5 @@
 import { useSearchParams } from 'react-router-dom';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { PeopleFilters } from './PeopleFilters';
 import { PeopleTable } from './PeopleTable';
 import { Loader } from './Loader';
@@ -28,32 +28,36 @@ export const PeoplePage = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
-  const visiblePeople = people.filter(person => {
-    if (sex && person.sex !== sex) {
+
+  const validCenturies = useMemo(() =>
+    centuries.filter(c => ['16', '17', '18', '19', '20'].includes(c)),
+  [centuries]);
+
+  const normalizedQuery = query?.toLowerCase().trim();
+
+  const filteredPeople = people.filter(person => {
+    if ((sex === 'm' || sex === 'f') && person.sex !== sex) {
       return false;
     }
 
-    if (centuries.length > 0) {
+    if (validCenturies.length > 0) {
       const century = String(Math.ceil(person.born / 100));
-      if (!centuries.includes(century)) {
+
+      if (!validCenturies.includes(century)) {
         return false;
       }
     }
 
-    if (query) {
-      const normalizedQuery = query.toLowerCase().trim();
-      const nameMatch = person.name
-        .toLowerCase()
-        .trim()
-        .includes(normalizedQuery);
+    if (normalizedQuery) {
+      const nameMatch = person.name.toLowerCase().includes(normalizedQuery);
 
       const motherMatch = person.motherName
-        ? person.motherName.toLowerCase().trim().includes(normalizedQuery)
-        : false;
+        ?.toLowerCase()
+        .includes(normalizedQuery);
 
       const fatherMatch = person.fatherName
-        ? person.fatherName.toLowerCase().trim().includes(normalizedQuery)
-        : false;
+        ?.toLowerCase()
+        .includes(normalizedQuery);
 
       if (!nameMatch && !motherMatch && !fatherMatch) {
         return false;
@@ -62,6 +66,29 @@ export const PeoplePage = () => {
 
     return true;
   });
+
+  const visiblePeople = [...filteredPeople];
+
+  if (sortParams) {
+    visiblePeople.sort((personA, personB) => {
+      switch (sortParams) {
+        case 'name':
+          return personA.name.localeCompare(personB.name);
+        case 'sex':
+          return personA.sex.localeCompare(personB.sex);
+        case 'born':
+          return personA.born - personB.born;
+        case 'died':
+          return personA.died - personB.died;
+        default:
+          return 0;
+      }
+    });
+
+    if (orderParams === 'desc') {
+      visiblePeople.reverse();
+    }
+  }
 
   if (sortParams) {
     visiblePeople.sort((personA, personB) => {
@@ -90,7 +117,7 @@ export const PeoplePage = () => {
 
       <div className="block">
         <div className="columns is-desktop is-flex-direction-row-reverse">
-          {!hasError && !isLoading && people.length > 0 && (
+          {!hasError && !isLoading && (
             <div className="column is-7-tablet is-narrow-desktop">
               <PeopleFilters />
             </div>
@@ -117,8 +144,7 @@ export const PeoplePage = () => {
               {!isLoading && !hasError && people.length > 0 && (
                 <PeopleTable
                   people={visiblePeople}
-                  sort={sortParams}
-                  order={orderParams}
+                  searchParams={searchParams}
                 />
               )}
             </div>

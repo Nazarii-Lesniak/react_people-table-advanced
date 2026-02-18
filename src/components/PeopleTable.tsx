@@ -1,25 +1,29 @@
 import React, { useMemo } from 'react';
 import classNames from 'classnames';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { PersonLink } from './PersonLink';
 import { getSearchWith, SearchParams } from '../utils/searchHelper';
 import { Person } from '../types';
 
 type Props = {
   people: Person[];
-  sort: string | null;
-  order: string | null;
+  searchParams: URLSearchParams;
 };
 
-export const PeopleTable: React.FC<Props> = ({ people, sort, order }) => {
+export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
   const { slug } = useParams();
-  const [searchParams] = useSearchParams();
+  const sort = searchParams.get('sort');
+  const order = searchParams.get('order');
+  const searchString = searchParams.toString();
 
   const peopleByName = useMemo(() => {
-    const map: { [key: string]: Person } = {};
+    const map: { [key: string]: Person[] } = {};
 
     people.forEach(person => {
-      map[person.name] = person;
+      if (!map[person.name]) {
+        map[person.name] = [];
+      }
+      map[person.name].push(person);
     });
 
     return map;
@@ -39,13 +43,11 @@ export const PeopleTable: React.FC<Props> = ({ people, sort, order }) => {
       nextParams = { sort: null, order: null };
     }
 
-    const nextSearch = getSearchWith(searchParams, nextParams);
-
     return (
       <th>
         <span className="is-flex is-flex-wrap-nowrap">
           {label}
-          <Link to={{ search: nextSearch }}>
+          <Link to={{ search: getSearchWith(searchParams, nextParams) }}>
             <span className="icon">
               <i
                 className={classNames('fas', {
@@ -79,42 +81,47 @@ export const PeopleTable: React.FC<Props> = ({ people, sort, order }) => {
 
       <tbody>
         {people.map(person => {
-          const motherLink = person.motherName
-            ? peopleByName[person.motherName]
-            : null;
-          const fatherLink = person.fatherName
-            ? peopleByName[person.fatherName]
-            : null;
+          const mothers = person.motherName ? peopleByName[person.motherName] : undefined;
+          const fathers = person.fatherName ? peopleByName[person.fatherName] : undefined;
 
           return (
             <tr
-              data-cy="person"
               key={person.slug}
+              data-cy="person"
               className={slug === person.slug ? 'has-background-warning' : ''}
             >
               <td>
-                <PersonLink person={person} />
+                <PersonLink person={person} search={searchString} />
               </td>
-
               <td>{person.sex}</td>
               <td>{person.born}</td>
               <td>{person.died}</td>
               <td>
-                {!person.motherName ? (
-                  '-'
-                ) : motherLink ? (
-                  <PersonLink person={motherLink} />
+                {person.motherName ? (
+                  mothers?.length === 1 ? (
+                    <PersonLink
+                      person={mothers[0]}
+                      search={searchString}
+                    />
+                  ) : (
+                    person.motherName
+                  )
                 ) : (
-                  person.motherName
+                  '-'
                 )}
               </td>
               <td>
-                {!person.fatherName ? (
-                  '-'
-                ) : fatherLink ? (
-                  <PersonLink person={fatherLink} />
+                {person.fatherName ? (
+                  fathers?.length === 1 ? (
+                    <PersonLink
+                      person={fathers[0]}
+                      search={searchString}
+                    />
+                  ) : (
+                    person.fatherName
+                  )
                 ) : (
-                  person.fatherName
+                  '-'
                 )}
               </td>
             </tr>
