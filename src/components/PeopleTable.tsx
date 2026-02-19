@@ -14,10 +14,12 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
   const { slug } = useParams();
   const sort = searchParams.get('sort');
   const order = searchParams.get('order');
-  const searchString = searchParams.toString();
+  const searchString = searchParams.toString()
+    ? `?${searchParams.toString()}`
+    : '';
 
   const peopleByName = useMemo(() => {
-    const map: { [key: string]: Person[] } = {};
+    const map: Record<string, Person[]> = {};
 
     people.forEach(person => {
       if (!map[person.name]) {
@@ -28,6 +30,40 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
 
     return map;
   }, [people]);
+
+  const renderParent = (parentName: string | null, linkedParent?: Person) => {
+    if (!parentName) {
+      return '-';
+    }
+
+    if (linkedParent) {
+      return <PersonLink person={linkedParent} search={searchString} />;
+    }
+
+    const matches = peopleByName[parentName] || [];
+
+    if (matches.length === 0) {
+      return parentName;
+    }
+
+    if (matches.length === 1) {
+      return <PersonLink person={matches[0]} search={searchString} />;
+    }
+
+    return (
+      <div className="is-flex is-flex-direction-column">
+        {matches.map((match, index) => (
+          <span key={match.slug}>
+            <PersonLink person={match} search={searchString} />
+            <small className="has-text-grey ml-1">
+              ({match.born}–{match.died})
+            </small>
+            {index < matches.length - 1 && ', '}
+          </span>
+        ))}
+      </div>
+    );
+  };
 
   const renderHeader = (field: string, label: string) => {
     const isCurrentSort = sort === field;
@@ -43,11 +79,18 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
       nextParams = { sort: null, order: null };
     }
 
+    const nextSearch = getSearchWith(searchParams, nextParams);
+
     return (
       <th>
         <span className="is-flex is-flex-wrap-nowrap">
           {label}
-          <Link to={{ search: getSearchWith(searchParams, nextParams) }}>
+          <Link
+            to={{
+              pathname: '/people',
+              search: nextSearch ? `?${nextSearch}` : '',
+            }}
+          >
             <span className="icon">
               <i
                 className={classNames('fas', {
@@ -81,9 +124,6 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
 
       <tbody>
         {people.map(person => {
-          const mothers = person.motherName ? peopleByName[person.motherName] : undefined;
-          const fathers = person.fatherName ? peopleByName[person.fatherName] : undefined;
-
           return (
             <tr
               key={person.slug}
@@ -96,34 +136,8 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
               <td>{person.sex}</td>
               <td>{person.born}</td>
               <td>{person.died}</td>
-              <td>
-                {person.motherName ? (
-                  mothers?.length === 1 ? (
-                    <PersonLink
-                      person={mothers[0]}
-                      search={searchString}
-                    />
-                  ) : (
-                    person.motherName
-                  )
-                ) : (
-                  '-'
-                )}
-              </td>
-              <td>
-                {person.fatherName ? (
-                  fathers?.length === 1 ? (
-                    <PersonLink
-                      person={fathers[0]}
-                      search={searchString}
-                    />
-                  ) : (
-                    person.fatherName
-                  )
-                ) : (
-                  '-'
-                )}
-              </td>
+              <td>{renderParent(person.motherName, person.mother)}</td>
+              <td>{renderParent(person.fatherName, person.father)}</td>
             </tr>
           );
         })}

@@ -20,13 +20,7 @@ export const Navbar = () => {
             Home
           </NavLink>
 
-          <NavLink
-            className={isActiveStyle}
-            to={{
-              pathname: '/people',
-              search: search,
-            }}
-          >
+          <NavLink className={isActiveStyle} to={`/people${search}`}>
             People
           </NavLink>
         </div>

@@ -28,88 +28,69 @@ export const PeoplePage = () => {
       .finally(() => setIsLoading(false));
   }, []);
 
-
-  const validCenturies = useMemo(() =>
-    centuries.filter(c => ['16', '17', '18', '19', '20'].includes(c)),
-  [centuries]);
+  const validCenturies = useMemo(
+    () => centuries.filter(c => ['16', '17', '18', '19', '20'].includes(c)),
+    [centuries],
+  );
 
   const normalizedQuery = query?.toLowerCase().trim();
 
-  const filteredPeople = people.filter(person => {
-    if ((sex === 'm' || sex === 'f') && person.sex !== sex) {
-      return false;
-    }
-
-    if (validCenturies.length > 0) {
-      const century = String(Math.ceil(person.born / 100));
-
-      if (!validCenturies.includes(century)) {
+  const visiblePeople = useMemo(() => {
+    const filtered = people.filter(person => {
+      if ((sex === 'm' || sex === 'f') && person.sex !== sex) {
         return false;
       }
-    }
 
-    if (normalizedQuery) {
-      const nameMatch = person.name.toLowerCase().includes(normalizedQuery);
+      if (validCenturies.length > 0) {
+        const century = String(Math.ceil(person.born / 100));
 
-      const motherMatch = person.motherName
-        ?.toLowerCase()
-        .includes(normalizedQuery);
-
-      const fatherMatch = person.fatherName
-        ?.toLowerCase()
-        .includes(normalizedQuery);
-
-      if (!nameMatch && !motherMatch && !fatherMatch) {
-        return false;
+        if (!validCenturies.includes(century)) {
+          return false;
+        }
       }
-    }
 
-    return true;
-  });
+      if (normalizedQuery) {
+        const nameMatch = person.name.toLowerCase().includes(normalizedQuery);
 
-  const visiblePeople = [...filteredPeople];
+        const motherMatch = person.motherName
+          ?.toLowerCase()
+          .includes(normalizedQuery);
 
-  if (sortParams) {
-    visiblePeople.sort((personA, personB) => {
-      switch (sortParams) {
-        case 'name':
-          return personA.name.localeCompare(personB.name);
-        case 'sex':
-          return personA.sex.localeCompare(personB.sex);
-        case 'born':
-          return personA.born - personB.born;
-        case 'died':
-          return personA.died - personB.died;
-        default:
-          return 0;
+        const fatherMatch = person.fatherName
+          ?.toLowerCase()
+          .includes(normalizedQuery);
+
+        if (!nameMatch && !motherMatch && !fatherMatch) {
+          return false;
+        }
       }
+
+      return true;
     });
 
-    if (orderParams === 'desc') {
-      visiblePeople.reverse();
-    }
-  }
+    if (sortParams) {
+      filtered.sort((personA, personB) => {
+        switch (sortParams) {
+          case 'name':
+            return personA.name.localeCompare(personB.name);
+          case 'sex':
+            return personA.sex.localeCompare(personB.sex);
+          case 'born':
+            return personA.born - personB.born;
+          case 'died':
+            return personA.died - personB.died;
+          default:
+            return 0;
+        }
+      });
 
-  if (sortParams) {
-    visiblePeople.sort((personA, personB) => {
-      switch (sortParams) {
-        case 'name':
-          return personA.name.localeCompare(personB.name);
-        case 'sex':
-          return personA.sex.localeCompare(personB.sex);
-        case 'born':
-          return personA.born - personB.born;
-        case 'died':
-          return personA.died - personB.died;
-        default:
-          return 0;
+      if (orderParams === 'desc') {
+        filtered.reverse();
       }
-    });
-
-    if (orderParams === 'desc') {
-      visiblePeople.reverse();
     }
-  }
+
+    return filtered;
+  }, [people, sex, validCenturies, normalizedQuery, sortParams, orderParams]);
 
   return (
     <>

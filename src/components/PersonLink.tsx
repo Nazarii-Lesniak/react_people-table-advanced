@@ -10,10 +10,7 @@ type Props = {
 export const PersonLink: React.FC<Props> = ({ person, search }) => {
   return (
     <Link
-      to={{
-        pathname: `/people/${person.slug}`,
-        search: search,
-      }}
+      to={`/people/${person.slug}${search}`}
       className={classNames({ 'has-text-danger': person.sex === 'f' })}
     >
       {person.name}
