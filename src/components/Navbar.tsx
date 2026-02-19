@@ -16,7 +16,7 @@ export const Navbar = () => {
     >
       <div className="container">
         <div className="navbar-brand">
-          <NavLink className={isActiveStyle} to="/">
+          <NavLink end className={isActiveStyle} to="/">
             Home
           </NavLink>
 

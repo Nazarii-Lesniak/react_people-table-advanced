@@ -25,6 +25,7 @@ export const PeopleTable: React.FC<Props> = ({ people, searchParams }) => {
       if (!map[person.name]) {
         map[person.name] = [];
       }
+
       map[person.name].push(person);
     });
 
